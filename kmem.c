@@ -20,12 +20,12 @@ MODULE_DESCRIPTION("An example module for reading and writing kernel memory");
 MODULE_VERSION(KMEM_VERSION);
 
 static char *device_name = "kmemory";
-module_param(device_name, charp, S_IRUGO);
+module_param(device_name, charp, 0444);
 MODULE_PARM_DESC(device_name,
 		 "The device name for reading and writing kernel memory.");
 
 static int	    major_number;
-static struct class * mclass;
+static struct class  *mclass;
 static struct device *mdevice;
 
 typedef long (*vmem_t)(char *buf, char *addr, unsigned long count);
@@ -210,16 +210,15 @@ static ssize_t write_kmem(struct file *file, const char __user *buf,
 
 static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 {
-	void __user *     arg_user;
+	void __user       *arg_user;
 	struct kmem_ioctl arg_kernel;
 	ssize_t		  n = 0;
 
 	arg_user = (void __user *)argp;
 	pr_info("ioctl cmd = %x\n", cmd);
 
-	if (copy_from_user(&arg_kernel, arg_user, sizeof(arg_kernel))) {
+	if (copy_from_user(&arg_kernel, arg_user, sizeof(arg_kernel)))
 		return -EFAULT;
-	}
 
 	switch (cmd) {
 	case KMEM_IOCTL_READ:
@@ -257,9 +256,8 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 		pr_info("stack ptr %p %lu %lx\n", arg_kernel.stack_ptr,
 			sizeof(arg_kernel.stack_ptr), *arg_kernel.stack_ptr);
 
-		if (copy_to_user(&arg_user, &arg_kernel, sizeof(arg_kernel))) {
+		if (copy_to_user(&arg_user, &arg_kernel, sizeof(arg_kernel)))
 			return -EFAULT;
-		}
 		break;
 	case KMEM_IOCTL_WRITE_NULL:
 		pr_info("write null to %p\n",
@@ -268,7 +266,6 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 		break;
 	default:
 		return -EINVAL;
-		break;
 	}
 
 	return n;

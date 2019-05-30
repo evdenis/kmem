@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef KMEM_IOCTL_H
 #define KMEM_IOCTL_H
 
@@ -5,17 +6,17 @@
 
 struct kmem_ioctl {
 	struct {
-		char *	buf;
+		char *buf;
 		size_t	count;
-		long long int ppos;
+		long long ppos; // loff_t
 	} rw;
 	struct {
-		char *	buf;
-		long long int ppos;
+		char *buf;
+		long long ppos;
 	} rw_ulong;
 	unsigned long *stack_ptr;
 	struct {
-		long long int ppos;
+		long long ppos;
 	} wnull;
 };
 
