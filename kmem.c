@@ -4,13 +4,13 @@
  */
 
 #include "version.h"
+#include <asm/stacktrace.h>
 #include <linux/device.h>
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/uaccess.h>
-#include <asm/stacktrace.h>
 
 #include "kmem_ioctl.h"
 
@@ -210,9 +210,9 @@ static ssize_t write_kmem(struct file *file, const char __user *buf,
 
 static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 {
-	void __user *arg_user;
+	void __user *     arg_user;
 	struct kmem_ioctl arg_kernel;
-	ssize_t n = 0;
+	ssize_t		  n = 0;
 
 	arg_user = (void __user *)argp;
 	pr_info("ioctl cmd = %x\n", cmd);
@@ -220,44 +220,55 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 	if (copy_from_user(&arg_kernel, arg_user, sizeof(arg_kernel))) {
 		return -EFAULT;
 	}
-	
+
 	switch (cmd) {
-		case KMEM_IOCTL_READ:
-			pr_info("read ppos %lld count %lu\n", arg_kernel.rw.ppos, arg_kernel.rw.count);
-			n = read_kmem(filp, arg_kernel.rw.buf, arg_kernel.rw.count, &arg_kernel.rw.ppos);
-			pr_info("read %ld bytes\n", n);
-			break;
-		case KMEM_IOCTL_WRITE:
-			pr_info("write ppos %lld count %lu\n", arg_kernel.rw.ppos, arg_kernel.rw.count);
-			n = write_kmem(filp, arg_kernel.rw.buf, arg_kernel.rw.count, &arg_kernel.rw.ppos);
-			pr_info("write %ld bytes\n", n);
-			break;
-		case KMEM_IOCTL_READ_ULONG:
-			pr_info("read ppos %lld count %lu\n", arg_kernel.rw_ulong.ppos, sizeof(unsigned long));
-			n = read_kmem(filp, arg_kernel.rw_ulong.buf, sizeof(unsigned long), &arg_kernel.rw_ulong.ppos);
-			pr_info("read %ld bytes\n", n);
-			break;
-		case KMEM_IOCTL_WRITE_ULONG:
-			pr_info("write ppos %lld count %lu\n", arg_kernel.rw_ulong.ppos, sizeof(unsigned long));
-			n = write_kmem(filp, arg_kernel.rw_ulong.buf, sizeof(unsigned long), &arg_kernel.rw_ulong.ppos);
-			pr_info("write %ld bytes\n", n);
-			break;
-		case KMEM_IOCTL_STACK_PTR:
-			arg_kernel.stack_ptr = get_stack_pointer(current, NULL);
+	case KMEM_IOCTL_READ:
+		pr_info("read ppos %lld count %lu\n", arg_kernel.rw.ppos,
+			arg_kernel.rw.count);
+		n = read_kmem(filp, arg_kernel.rw.buf, arg_kernel.rw.count,
+			      &arg_kernel.rw.ppos);
+		pr_info("read %ld bytes\n", n);
+		break;
+	case KMEM_IOCTL_WRITE:
+		pr_info("write ppos %lld count %lu\n", arg_kernel.rw.ppos,
+			arg_kernel.rw.count);
+		n = write_kmem(filp, arg_kernel.rw.buf, arg_kernel.rw.count,
+			       &arg_kernel.rw.ppos);
+		pr_info("write %ld bytes\n", n);
+		break;
+	case KMEM_IOCTL_READ_ULONG:
+		pr_info("read ppos %lld count %lu\n", arg_kernel.rw_ulong.ppos,
+			sizeof(unsigned long));
+		n = read_kmem(filp, arg_kernel.rw_ulong.buf,
+			      sizeof(unsigned long), &arg_kernel.rw_ulong.ppos);
+		pr_info("read %ld bytes\n", n);
+		break;
+	case KMEM_IOCTL_WRITE_ULONG:
+		pr_info("write ppos %lld count %lu\n", arg_kernel.rw_ulong.ppos,
+			sizeof(unsigned long));
+		n = write_kmem(filp, arg_kernel.rw_ulong.buf,
+			       sizeof(unsigned long),
+			       &arg_kernel.rw_ulong.ppos);
+		pr_info("write %ld bytes\n", n);
+		break;
+	case KMEM_IOCTL_STACK_PTR:
+		arg_kernel.stack_ptr = get_stack_pointer(current, NULL);
 
-			pr_info("stack ptr %p %lu %lx\n", arg_kernel.stack_ptr, sizeof(arg_kernel.stack_ptr), *arg_kernel.stack_ptr);
+		pr_info("stack ptr %p %lu %lx\n", arg_kernel.stack_ptr,
+			sizeof(arg_kernel.stack_ptr), *arg_kernel.stack_ptr);
 
-			if (copy_to_user(&arg_user, &arg_kernel, sizeof(arg_kernel))) {
-				return -EFAULT;
-			}
-			break;
-		case KMEM_IOCTL_WRITE_NULL:
-			pr_info("write null to %p\n", (unsigned long *) arg_kernel.wnull.ppos);
-			*((unsigned long *) arg_kernel.wnull.ppos) = 0;
-			break;
-		default:
-			return -EINVAL;
-			break;
+		if (copy_to_user(&arg_user, &arg_kernel, sizeof(arg_kernel))) {
+			return -EFAULT;
+		}
+		break;
+	case KMEM_IOCTL_WRITE_NULL:
+		pr_info("write null to %p\n",
+			(unsigned long *)arg_kernel.wnull.ppos);
+		*((unsigned long *)arg_kernel.wnull.ppos) = 0;
+		break;
+	default:
+		return -EINVAL;
+		break;
 	}
 
 	return n;
@@ -274,10 +285,10 @@ static int open_kmem(struct inode *inode, struct file *filp)
 }
 
 static const struct file_operations kmem_fops = {
-	.owner = THIS_MODULE,
-	.read  = read_kmem,
-	.write = write_kmem,
-	.open  = open_kmem,
+	.owner		= THIS_MODULE,
+	.read		= read_kmem,
+	.write		= write_kmem,
+	.open		= open_kmem,
 	.unlocked_ioctl = ioctl_kmem,
 };
 
@@ -310,7 +321,6 @@ static void __init find_functions(void)
 	}
 	pr_debug("is_vmalloc_or_module_addr found\n");
 }
-
 
 static char *mem_devnode(struct device *dev, umode_t *mode)
 {
