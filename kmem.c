@@ -45,6 +45,7 @@ static inline unsigned long size_inside_page(unsigned long start,
 	return min(sz, size);
 }
 
+// The code is based on /dev/kmem driver
 /*
  * This function reads the *virtual* memory as seen by the kernel.
  */
@@ -155,6 +156,7 @@ static ssize_t do_write_kmem(unsigned long p, const char __user *buf,
 	return written;
 }
 
+// The code is based on /dev/kmem driver
 /*
  * This function writes to the *virtual* memory as seen by the kernel.
  */
