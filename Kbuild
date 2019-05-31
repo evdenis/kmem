@@ -2,6 +2,6 @@
 #
 # Copyright (C) 2019 Denis Efremov <efremov@linux.com>. All Rights Reserved.
 
-ccflags-y += -D'pr_fmt(fmt)=KBUILD_MODNAME ": " fmt'
+ccflags-y += -DDEBUG -D'pr_fmt(fmt)=KBUILD_MODNAME ": " fmt'
 
 obj-m := kmem.o

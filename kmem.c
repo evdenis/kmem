@@ -24,7 +24,7 @@ module_param(device_name, charp, 0444);
 MODULE_PARM_DESC(device_name,
 		 "The device name for reading and writing kernel memory.");
 
-static int	    major_number;
+static int	      major_number;
 static struct class  *mclass;
 static struct device *mdevice;
 
@@ -303,14 +303,14 @@ static void __init find_functions(void)
 		pr_warn("can't find vread, will use memcpy\n");
 		kmread = (vmem_t)&memcpy;
 	}
-	pr_debug("vread found\n");
+	pr_devel("vread found\n");
 
 	kmwrite = (vmem_t)kallsyms_lookup_name("vwrite");
 	if (!kmwrite) {
 		pr_warn("can't find vwrite, will use memcpy\n");
 		kmwrite = (vmem_t)&memcpy;
 	}
-	pr_debug("vwrite found\n");
+	pr_devel("vwrite found\n");
 
 	check_vmalloc_or_module_addr =
 		(check_addr_t)kallsyms_lookup_name("is_vmalloc_or_module_addr");
@@ -318,7 +318,7 @@ static void __init find_functions(void)
 		pr_warn("can't find is_vmalloc_or_module_addr, will skip the check\n");
 		check_vmalloc_or_module_addr = check_addr;
 	}
-	pr_debug("is_vmalloc_or_module_addr found\n");
+	pr_devel("is_vmalloc_or_module_addr found\n");
 }
 
 static char *mem_devnode(struct device *dev, umode_t *mode)
@@ -338,7 +338,7 @@ static int __init kmem_init(void)
 		pr_err("Failed to register a major number\n");
 		return major_number;
 	}
-	pr_debug("major number %d\n", major_number);
+	pr_devel("major number %d\n", major_number);
 
 	mclass = class_create(THIS_MODULE, "kmemory");
 	if (IS_ERR(mclass)) {
@@ -346,7 +346,7 @@ static int __init kmem_init(void)
 		unregister_chrdev(major_number, device_name);
 		return PTR_ERR(mclass);
 	}
-	pr_debug("device class registered\n");
+	pr_devel("device class registered\n");
 
 	mclass->devnode = mem_devnode;
 
@@ -358,7 +358,7 @@ static int __init kmem_init(void)
 		unregister_chrdev(major_number, device_name);
 		return PTR_ERR(mdevice);
 	}
-	pr_debug("device '%s' created\n", device_name);
+	pr_devel("device '%s' created\n", device_name);
 
 	find_functions();
 
