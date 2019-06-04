@@ -296,19 +296,39 @@ static int check_addr(const void *addr)
 	return 0;
 }
 
+long dummy_vread(char *buf, char *addr, unsigned long count)
+{
+	/* Don't allow overflow */
+	if ((unsigned long) buf + count < count)
+		count = -(unsigned long) buf;
+
+	memcpy(buf, addr, count);
+	return count;
+}
+
+long dummy_vwrite(char *buf, char *addr, unsigned long count)
+{
+	/* Don't allow overflow */
+	if ((unsigned long) addr + count < count)
+		count = -(unsigned long) addr;
+
+	memcpy(addr, buf, count);
+	return count;
+}
+
 static void __init find_functions(void)
 {
 	kmread = (vmem_t)kallsyms_lookup_name("vread");
 	if (!kmread) {
 		pr_warn("can't find vread, will use memcpy\n");
-		kmread = (vmem_t)&memcpy;
+		kmread = (vmem_t)&dummy_vread;
 	}
 	pr_devel("vread found\n");
 
 	kmwrite = (vmem_t)kallsyms_lookup_name("vwrite");
 	if (!kmwrite) {
 		pr_warn("can't find vwrite, will use memcpy\n");
-		kmwrite = (vmem_t)&memcpy;
+		kmwrite = (vmem_t)&dummy_vwrite;
 	}
 	pr_devel("vwrite found\n");
 
