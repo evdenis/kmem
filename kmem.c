@@ -35,6 +35,30 @@ static vmem_t kmwrite;
 typedef int (*check_addr_t)(const void *x);
 static check_addr_t check_vmalloc_or_module_addr;
 
+void dump_creds(const struct cred *c)
+{
+	pr_info("Dumping cred %p\n", c);
+	if (c) {
+		unsigned i = 0;
+		pr_info("usage: %d\n", atomic_read(&c->usage));
+		pr_info("uid %u gid %u\n", c->uid.val, c->gid.val);
+		pr_info("suid %u sgid %u\n", c->suid.val, c->sgid.val);
+		pr_info("euid %u egid %u\n", c->euid.val, c->egid.val);
+		pr_info("fsuid %u fsgid %u\n", c->fsuid.val, c->fsgid.val);
+		pr_info("securebits %u\n", c->securebits);
+		pr_info("cap_permitted ");
+		CAP_FOR_EACH_U32(i) {
+			pr_cont("%x ", c->cap_permitted.cap[i]);
+		}
+		pr_cont("\n");
+		pr_info("cap_effective ");
+		CAP_FOR_EACH_U32(i) {
+			pr_cont("%x ", c->cap_effective.cap[i]);
+		}
+		pr_cont("\n");
+	}
+}
+
 static inline unsigned long size_inside_page(unsigned long start,
 					     unsigned long size)
 {
@@ -57,15 +81,11 @@ static ssize_t read_kmem(struct file *file, char __user *buf, size_t count,
 	char *kbuf; /* k-addr because kmread() takes vmlist_lock rwlock */
 	int   err = 0;
 
-	pr_info("read: count %lu, ppos %p\n", count, ppos);
-
 	read = 0;
 	if (p < (unsigned long)high_memory) {
 		low_count = count;
 		if (count > (unsigned long)high_memory - p)
 			low_count = (unsigned long)high_memory - p;
-
-		pr_info("read: low_count %ld\n", low_count);
 
 		while (low_count > 0) {
 			sz = size_inside_page(p, low_count);
@@ -217,48 +237,59 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 	ssize_t		  n = 0;
 
 	arg_user = (void __user *)argp;
-	pr_info("ioctl cmd = %x\n", cmd);
 
 	if (copy_from_user(&arg_kernel, arg_user, sizeof(arg_kernel)))
 		return -EFAULT;
 
 	switch (cmd) {
 	case KMEM_IOCTL_READ:
-		pr_info("read ppos %lld count %lu\n", arg_kernel.rw.ppos,
+		pr_info("read ppos %llx count %zu\n", arg_kernel.rw.ppos,
 			arg_kernel.rw.count);
 		n = read_kmem(filp, arg_kernel.rw.buf, arg_kernel.rw.count,
 			      &arg_kernel.rw.ppos);
-		pr_info("read %ld bytes\n", n);
+		pr_info("read %zd bytes\n", n);
 		break;
 	case KMEM_IOCTL_WRITE:
-		pr_info("write ppos %lld count %lu\n", arg_kernel.rw.ppos,
+		pr_info("write ppos %llx count %zu\n", arg_kernel.rw.ppos,
 			arg_kernel.rw.count);
 		n = write_kmem(filp, arg_kernel.rw.buf, arg_kernel.rw.count,
 			       &arg_kernel.rw.ppos);
-		pr_info("write %ld bytes\n", n);
+		pr_info("write %zd bytes\n", n);
 		break;
 	case KMEM_IOCTL_READ_ULONG:
-		pr_info("read ppos %lld count %lu\n", arg_kernel.rw_ulong.ppos,
+		pr_info("read ppos %llx count %zu\n", arg_kernel.rw_ulong.ppos,
 			sizeof(unsigned long));
 		n = read_kmem(filp, arg_kernel.rw_ulong.buf,
 			      sizeof(unsigned long), &arg_kernel.rw_ulong.ppos);
-		pr_info("read %ld bytes\n", n);
+		pr_info("read %zd bytes\n", n);
 		break;
 	case KMEM_IOCTL_WRITE_ULONG:
-		pr_info("write ppos %lld count %lu\n", arg_kernel.rw_ulong.ppos,
+		pr_info("write ppos %llx count %zu\n", arg_kernel.rw_ulong.ppos,
 			sizeof(unsigned long));
 		n = write_kmem(filp, arg_kernel.rw_ulong.buf,
 			       sizeof(unsigned long),
 			       &arg_kernel.rw_ulong.ppos);
-		pr_info("write %ld bytes\n", n);
+		pr_info("write %zd bytes\n", n);
 		break;
 	case KMEM_IOCTL_STACK_PTR:
-		arg_kernel.stack_ptr = get_stack_pointer(current, NULL);
+		pr_devel("STACK PTR\n");
+		arg_kernel.stack_ptr = (void *) current_stack_pointer;
 
-		pr_info("stack ptr %p %lu %lx\n", arg_kernel.stack_ptr,
-			sizeof(arg_kernel.stack_ptr), *arg_kernel.stack_ptr);
+		pr_info("THREAD_SIZE %lx\n", THREAD_SIZE);
 
-		if (copy_to_user(&arg_user, &arg_kernel, sizeof(arg_kernel)))
+		pr_info("stack ptr %p\n", arg_kernel.stack_ptr);
+
+		pr_info("current %p\n", current);
+		pr_info("current_thread_info %p\n", current_thread_info());
+		pr_info("ti task_struct %p\n", current_thread_info()->task);
+		pr_info("current->cred field addr %p\n", &current->cred);
+		pr_info("current->cred addr %p\n", current->cred);
+		pr_info("current->cred offset %zu\n", offsetof(struct task_struct, cred));
+
+		pr_info("struct task_struct size %zu\n", sizeof(struct task_struct));
+		pr_info("struct cred size %zu\n", sizeof(struct cred));
+
+		if (copy_to_user(arg_user, &arg_kernel, sizeof(arg_kernel)))
 			return -EFAULT;
 		break;
 	case KMEM_IOCTL_WRITE_NULL:
@@ -266,7 +297,15 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 			(unsigned long *)arg_kernel.wnull.ppos);
 		*((unsigned long *)arg_kernel.wnull.ppos) = 0;
 		break;
+#if 0
+	case KMEM_IOCTL_GET_ROOT:
+		dump_creds(current->cred);
+		commit_creds(prepare_kernel_cred(NULL));
+		dump_creds(current->cred);
+		break;
+#endif
 	default:
+		pr_warn("unknown ioctl cmd %x\n", cmd);
 		return -EINVAL;
 	}
 

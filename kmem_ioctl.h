@@ -14,7 +14,7 @@ struct kmem_ioctl {
 		char *buf;
 		long long ppos;
 	} rw_ulong;
-	unsigned long *stack_ptr;
+	void *stack_ptr;
 	struct {
 		long long ppos;
 	} wnull;
@@ -27,5 +27,6 @@ struct kmem_ioctl {
 #define KMEM_IOCTL_WRITE_ULONG _IOW(KMEM_IOCTL_MAGIC, 3, struct kmem_ioctl)
 #define KMEM_IOCTL_STACK_PTR _IOR(KMEM_IOCTL_MAGIC, 4, struct kmem_ioctl)
 #define KMEM_IOCTL_WRITE_NULL _IOW(KMEM_IOCTL_MAGIC, 5, struct kmem_ioctl)
+#define KMEM_IOCTL_GET_ROOT _IOW(KMEM_IOCTL_MAGIC, 6, struct kmem_ioctl)
 
 #endif /* KMEM_IOCTL_H */

@@ -58,3 +58,5 @@ modules.builtin
 Module.symvers
 Mkfile.old
 dkms.conf
+
+/get_root
