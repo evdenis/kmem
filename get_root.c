@@ -12,7 +12,7 @@
 
 #define UBUNTU14 1
 
-#ifdef UNUNTU14 // 32
+#ifdef UBUNTU14 // 32
 # define THREAD_SIZE 0x2000
 # define TASK_CRED_OFFSET 1020
 #else // UBUNTU16
