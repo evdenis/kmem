@@ -274,7 +274,7 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 	case KMEM_IOCTL_STACK_PTR:
 		arg_kernel.stack_ptr = (void *) current_stack_pointer;
 
-		pr_info("THREAD_SIZE %lx\n", THREAD_SIZE);
+		/*pr_info("THREAD_SIZE %lx\n", THREAD_SIZE);
 		pr_info("stack ptr %p\n", arg_kernel.stack_ptr);
 		pr_info("current %p\n", current);
 		pr_info("current_thread_info %p\n", current_thread_info());
@@ -283,7 +283,7 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 		pr_info("current->cred addr %p\n", current->cred);
 		pr_info("current->cred offset %zu\n", offsetof(struct task_struct, cred));
 		pr_info("struct task_struct size %zu\n", sizeof(struct task_struct));
-		pr_info("struct cred size %zu\n", sizeof(struct cred));
+		pr_info("struct cred size %zu\n", sizeof(struct cred));*/
 
 		if (copy_to_user(arg_user, &arg_kernel, sizeof(arg_kernel)))
 			return -EFAULT;
