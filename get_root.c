@@ -57,14 +57,14 @@ int main(int argc, char *argv[])
 	}
 	printf("open: fd %d\n", fd);
 
-	struct kmem_ioctl stack;
-	stack.stack_ptr = NULL;
+	struct kmem_ioctl *stack = malloc(sizeof(struct kmem_ioctl));
+	stack->stack_ptr = NULL;
 	rc = ioctl(fd, KMEM_IOCTL_STACK_PTR, stack);
 	if (rc < 0)
                 fatal(" [+] Failed to read stack pointer");
 	printf("ioctl: stack ptr %p\n", stack->stack_ptr);
 
-	void *current_thread_info = ((unsigned long)stack.stack_ptr & ~(THREAD_SIZE - 1));
+	void *current_thread_info = ((unsigned long)stack->stack_ptr & ~(THREAD_SIZE - 1));
 	printf("current_thread_info ptr %p\n", current_thread_info);
 	void *current;
 	struct kmem_ioctl mem = { .rw_ulong = { .buf = &current, .ppos = current_thread_info } };
