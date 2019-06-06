@@ -26,7 +26,7 @@ clean:
 	@-rm -f get_root
 
 style:
-	$(KERNELDIR)/scripts/checkpatch.pl -f --max-line-length=4000 --codespell --color=always $(filter-out kmem.mod.c,$(wildcard *.c)) $(wildcard *.h)
+	$(KERNELDIR)/scripts/checkpatch.pl -f --max-line-length=4000 --codespell --color=always kmem.c kmem_ioctl.h
 
 check:
 	@scan-build --html-title=Kmem -maxloop 100 --keep-going $(MAKE) -C $(KERNELDIR) C=2 CF="-D__CHECK_ENDIAN__" M=$(PWD)
@@ -47,7 +47,7 @@ load: build
 	@sudo insmod ./kmem.ko
 
 run: unload load
-	@sudo dmesg | tail
+	@sudo dmesg | tail -n 30
 
 get_root: get_root.c kmem_ioctl.h
 	@gcc -std=gnu99 -o $@ $<

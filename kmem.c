@@ -39,7 +39,7 @@ void dump_creds(const struct cred *c)
 {
 	pr_info("Dumping cred %p\n", c);
 	if (c) {
-		unsigned i = 0;
+		unsigned int i = 0;
 		pr_info("usage: %d\n", atomic_read(&c->usage));
 		pr_info("uid %u gid %u\n", c->uid.val, c->gid.val);
 		pr_info("suid %u sgid %u\n", c->suid.val, c->sgid.val);
@@ -281,7 +281,7 @@ static long ioctl_kmem(struct file *filp, unsigned int cmd, unsigned long argp)
 
 		pr_info("current %p\n", current);
 		pr_info("current_thread_info %p\n", current_thread_info());
-		pr_info("ti task_struct %p\n", current_thread_info()->task);
+		//pr_info("ti task_struct %p\n", current_thread_info()->task);
 		pr_info("current->cred field addr %p\n", &current->cred);
 		pr_info("current->cred addr %p\n", current->cred);
 		pr_info("current->cred offset %zu\n", offsetof(struct task_struct, cred));
