@@ -47,4 +47,5 @@ script:
         - make KERNELDIR=$CHECK_KERNEL check
         - ( eval $(opam config env) && make KERNELDIR=$CHECK_KERNEL coccicheck ) || ( cd $CHECK_KERNEL && cat cocci.debug && exit 1 )
         - make run
-        - make test
+        - make test || true
+        - sudo dmesg | tail -n 30
