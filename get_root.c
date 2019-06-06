@@ -10,10 +10,15 @@
 
 #include "kmem_ioctl.h"
 
-#define THREAD_SIZE 0x2000
-
-#define TASK_CRED_OFFSET 1020
-#define CRED_SIZE 124
+#ifdef UNUNTU14 // 32
+# define THREAD_SIZE 0x2000
+# define TASK_CRED_OFFSET 1020
+# define CRED_SIZE 124
+#else // UBUNTU16
+# define THREAD_SIZE 0x4000
+# define TASK_CRED_OFFSET 2632
+# define CRED_SIZE 168
+#endif
 
 static void fatal(char *msg)
 {
