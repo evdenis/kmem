@@ -5,6 +5,8 @@
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
+USER_CFLAGS += -std=gnu99 -DSYSTEM=1
+
 all: build
 
 ifneq ($(V),1)
@@ -14,8 +16,8 @@ endif
 version.h:
 	@ver="/* SPDX-License-Identifier: GPL-2.0 */\n\
 	#define KMEM_VERSION \"$$(git describe --dirty 2>/dev/null)\"" && \
-	[ "$$(cat version.h 2>/dev/null)" != "$$ver" ]                     && \
-	echo "$$ver" > version.h                                           && \
+	[ "$$(cat version.h 2>/dev/null)" != "$$ver" ]                 && \
+	echo "$$ver" > version.h                                       && \
 	git update-index --assume-unchanged version.h || true
 
 build: version.h
