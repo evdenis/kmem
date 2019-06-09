@@ -14,15 +14,15 @@
 #define UBUNTU14_64 2
 
 #ifndef SYSTEM
-# define SYSTEM UBUNTU14_32
+# define SYSTEM UBUNTU14_64
 #endif
 
 #if SYSTEM == UBUNTU14_32
 # define THREAD_SIZE 0x2000
 # define TASK_CRED_OFFSET 1020
-#elif SYSTEM == UBUNTU16_64
+#elif SYSTEM == UBUNTU14_64
 # define THREAD_SIZE 0x4000
-# define TASK_CRED_OFFSET 2632
+# define TASK_CRED_OFFSET 1536
 #endif
 
 static void fatal(char *msg)
