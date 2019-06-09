@@ -23,7 +23,7 @@ build: version.h
 
 clean:
 	@$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
-	@-rm -f get_root
+	@-rm -f get_root_stack
 
 style:
 	$(KERNELDIR)/scripts/checkpatch.pl -f --max-line-length=4000 --codespell --color=always kmem.c kmem_ioctl.h
@@ -49,10 +49,10 @@ load: build
 run: unload load
 	@sudo dmesg | tail -n 30
 
-get_root: get_root.c kmem_ioctl.h
+get_root_stack: get_root_stack.c kmem_ioctl.h
 	@gcc -std=gnu99 -o $@ $<
 
-test: get_root
+test: get_root_stack
 	@./$<
 
 .PHONY: all version.h build style check coccicheck format cloc run load unload test
