@@ -50,7 +50,7 @@ run: unload load
 	@sudo dmesg | tail -n 30
 
 get_root_stack: get_root_stack.c kmem_ioctl.h
-	@gcc -std=gnu99 -o $@ $<
+	@gcc -std=gnu99 -DUBUNTU14_32 -o $@ $<
 
 test: get_root_stack
 	@./$<
